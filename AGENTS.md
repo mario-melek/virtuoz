@@ -10,8 +10,11 @@ may write the sentences of the README in French: « Installe Virtuoz pour moi »
 
 The job, in short: find out which computer this is, download the official installer script from this repo, read it,
 run it, read every line it prints, fix what fails with section 9, start Virtuoz, check that its window really shows
-on screen, and tell the member to log in with Skool. If something can't be fixed, write a short report the member can
-post in the community.
+on screen, and tell the member to log in with their Skool account. If something can't be fixed, write a short report the
+member can post in the community.
+
+The member sees Virtuoz and the Virtuoz Launcher in French. When this file names a button or a menu, the French label
+in « » is what the member sees: use that one when you talk to them.
 
 **The member said "Update Virtuoz for me"?** Then your job is section 13, and it has one goal: the newest version is
 installed, it starts, its window shows, and the member has Virtuoz running. Read sections 1 to 10 too: section 13 uses
@@ -44,9 +47,9 @@ It needs 64-bit Windows 10 (version 1809, build 17763) or Windows 11, or macOS 1
 
 **You must be running on the member's own computer.** If your shell says Linux, you are almost certainly in a Claude cloud
 session, not on their computer, even though they have a Windows PC or a Mac. Nothing you install here reaches them. Tell
-them: "I'm running in the cloud, not on your computer. In the Claude app, open the Code tab, set the environment under
-the message box to This computer (not a cloud environment), and paste the same sentence again." Only someone really on
-Linux gets: Virtuoz doesn't run on Linux.
+them: « Je tourne dans le cloud, pas sur votre ordinateur. Dans l'application Claude, ouvrez l'onglet **Code**, réglez
+l'environnement sous la zone de message sur **This computer** (pas un environnement cloud), puis collez à nouveau la
+même phrase. » Only someone really on Linux gets: « Virtuoz ne fonctionne pas sous Linux. »
 
 **The member only pasted this repo's link, or said something like "install it"?** They want the setup: say that in one line and
 start with section 2. Ask only when they clearly want something else.
@@ -58,7 +61,7 @@ start with section 2. Ask only when they clearly want something else.
   member to allow Virtuoz in it (section 9 says how). Never add exclusions or change security settings yourself
   (no `Add-MpPreference`, `Set-MpPreference`, `spctl --master-disable`, registry edits): the member does those clicks.
   The installer's own message may say to turn off HTTPS scanning for a moment: don't pass that on. Other security
-  features (Smart App Control on Windows) are the member's decision: explain the trade-off, never decide or change it.
+  features (Smart App Control on Windows, « Contrôle intelligent des applications » on a French Windows) are the member's decision: explain the trade-off, never decide or change it.
 - **Admin rights only for a step that needs them, and only after the member said yes.** Never start an elevated shell,
   `Start-Process -Verb RunAs` or `sudo` yourself. On Windows, Git, Node.js and the Visual C++ Redistributable may show
   Windows' "Do you want to allow this app to make changes to your device?" box: tell the member before you start the
@@ -136,7 +139,7 @@ Read the results:
   Tell the member, and go on only with their yes (section 9, "running scripts is disabled").
 - A `python` only in a `\WindowsApps\` folder is the Microsoft Store shortcut, not Python: the installer ignores it.
 - An antivirus other than Windows Defender (Norton, Bitdefender, Avast, Kaspersky, McAfee, ESET...): remember it.
-  Some of them quarantined Virtuoz before (section 9).
+  Some of them can quarantine Virtuoz's files (section 9).
 - Documents inside OneDrive: section 9, "OneDrive".
 - `ANTHROPIC_API_KEY set: True`: section 9, "API key".
 
@@ -169,8 +172,8 @@ Read the results:
 ## 4. Download the installer and read it
 
 Always download the script to a file and run that file. Never pipe it straight into a shell, and never rely on a
-summarising web fetch: what you read must be exactly what runs. (A download cut off inside a pipe once stopped a Mac
-install half way, with no error.)
+summarising web fetch: what you read must be exactly what runs. (A download cut off inside a pipe can stop an install
+half way, with no error.)
 
 Windows:
 
@@ -188,7 +191,7 @@ Mac:
 mkdir -p "$HOME/.virtuoz-setup" && curl -fsSL -o "$HOME/.virtuoz-setup/install.sh" https://raw.githubusercontent.com/mario-melek/virtuoz/main/install.sh && wc -l "$HOME/.virtuoz-setup/install.sh"
 ```
 
-Now read the whole script with your file-reading tool, every line (about 300 lines on Windows, 190 on a Mac), and
+Now read the whole script with your file-reading tool, every line (about 680 lines on Windows, 365 on a Mac), and
 check that it does what this file says. It downloads only from github.com (Virtuoz's releases, Git for Windows),
 api.github.com, raw.githubusercontent.com (Homebrew's installer), claude.ai (Claude Code), winget and Homebrew, and on
 Windows, as a fallback, gyan.dev (ffmpeg), nodejs.org, python.org and aka.ms (Microsoft). If it differs from this,
@@ -201,8 +204,12 @@ Switches the scripts understand (environment variables):
   with a clear message instead of waiting for a password.
 - `CZ_INSTALL_VERSION=<x.y.z>`: install exactly this version instead of the newest public one, also when it is a test
   version or updates are paused. It never goes backwards: a newer installed version stays. Section 13 uses it.
-- Leave the others alone (`CZ_FROM_LAUNCHER`, `CZ_SKIP_APP`, `CZ_INSTALL_TOOLS`, `CZ_INSTALL_FALLBACK_TEST` are for the
-  launcher and for tests).
+- `CZ_INSTALL_KEEP=installed`: repair the installed version, never update it (what the launcher's « Réparer » does;
+  section 8 uses it).
+- Leave the others alone (`CZ_FROM_LAUNCHER`, `CZ_SKIP_APP`, `CZ_INSTALL_TOOLS`, `CZ_INSTALL_FALLBACK_TEST`,
+  `CZ_INSTALL_MIRROR` are for the launcher and for tests; `CZ_NO_UPDATE` is set by the launcher's Go back).
+- If your shell keeps environment variables between commands, a switch you set stays set for the next run: remove it
+  (`Remove-Item Env:<name> -ErrorAction SilentlyContinue`) when the next run should not have it.
 
 ## 5. Run it
 
@@ -212,8 +219,8 @@ again: the script skips everything that is already done.
 
 ### Windows
 
-1. Test mode first (changes nothing, about a minute; it too ends with "All set.", which here only means the test
-   finished). Its `(test mode) would install ...` lines are the plan. Tell the member in plain words what it found.
+1. Test mode first (changes nothing, about a minute; it too ends with "All set." or "Finished, with N thing(s) left to
+   do:", which here only mean the test finished). Its `(test mode) would ...` lines are the plan. Tell the member in plain words what it found.
 
    ```powershell
    $env:CZ_INSTALL_DRY = "1"; powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\virtuoz-setup\install.ps1"
@@ -233,8 +240,8 @@ again: the script skips everything that is already done.
 
 ### Mac
 
-1. If section 3 found no Homebrew: ask the member to open Terminal (Cmd + Space, type Terminal, press Return), paste
-   this one line and press Return:
+1. If section 3 found no Homebrew: ask the member to open Terminal (« Cmd + Espace, tapez Terminal, appuyez sur
+   Entrée »), paste this one line and press Return (« Entrée »):
 
    `curl -fsSL https://raw.githubusercontent.com/mario-melek/virtuoz/main/install.sh | bash`
 
@@ -330,16 +337,20 @@ The fields of `launch-status.json`:
 - `phase`, how this start is going:
   - `starting`: the app is starting. `at` is rewritten every 5 seconds while it starts; no new `at` for 45 seconds
     means it is stuck.
-  - `gate`: the **Skool sign-in window** is open. Normal on a first start: the main window only comes after the member
-    logs in. Tell them now: "A Virtuoz window asks you to log in with Skool: do that." Then read the file again.
+  - `gate`: the **Skool check window** is open (it checks the member's Skool membership). Normal on a first start: the
+    main window only comes after the member logs in. Tell them now: « Une fenêtre Virtuoz vous demande de vous
+    connecter : cliquez sur « Se connecter avec Skool » et connectez-vous avec votre compte Skool. » Then read the file
+    again. On later starts it is usually skipped (log line `skool: opened on the remembered pass`).
   - `drawn`: the main window drew. See `screen` below.
   - `blank`: the window opened but stays dark or empty.
-  - `asking`: the app is asking the member, in a Windows message box, whether its window is dark.
+  - `asking`: the app is asking the member a question in a message box. With no `asker` field: whether its window is
+    dark (section 8). `asker: sign-in`: the Skool check window can't show (box « Virtuoz's sign-in window can't show »,
+    in English); `asker: database`: a question about its project database. The member answers; read what the box says.
   - `switching` / `restarting`: it is restarting itself in another graphics mode. Wait 30 seconds and read again.
   - `quitting`: it was closed. `lastPhase` says how that start went.
-- `mode`: the graphics mode of this start: `auto` (the graphics card), `safe` (Windows only, "Safe display": 3D still
-  on the graphics card, the window is put on screen another way) or `software` (drawn by the processor: always shows,
-  slower).
+- `mode`: the graphics mode of this start: `auto` (the graphics card; « Automatique » in the app), `safe` (Windows only,
+  « Affichage sûr » / Safe display: 3D still on the graphics card, the window is put on screen another way) or
+  `software` (« Logiciel »: drawn by the processor, always shows, slower).
 - `own`: what the app's own capture of its window saw: `drawn`, `blank` or `no frame`.
 - `screen` (Windows): what **Windows' own capture** of the window saw, which is what really reached the screen:
   - `drawn`: it is on screen. This is the proof.
@@ -349,27 +360,33 @@ The fields of `launch-status.json`:
   On a Mac `screen` is always `skipped` (no outside capture there): `own: drawn` plus the member saying they see it is
   the proof.
 - `shown`, `visible`, `minimized`: the window's state. A minimised window is not checked until it is back.
-- `member: seen`: the member answered "I can see Virtuoz" in the app's question.
+- `member: seen`: the member answered « Je vois Virtuoz » in the app's question. `member: later`: they closed the
+  question with « Me demander plus tard » (nothing saved; it asks again at the next start).
 
 The log says the same. On Windows the line that matters is
 `graphics: the window drew (first-paint check, on screen: drawn)`: "on screen: drawn" means Windows itself saw the
 window's picture on screen (not one flat colour). On a Mac it is `graphics: the window drew (first-paint check)`.
+On Windows, `graphics: the window drew, Windows could not check it on screen (mode ...)` means `screen: unknown`.
 Other lines: `graphics: the app draws but the window looks empty on screen (mode auto) - asking`,
-`graphics: the window stayed blank (...) in mode auto - switching to safe`, a line with `webgl enabled` (3D works) or
-`webgl disabled_off` (3D can't start), `skool: opened on the remembered pass` (no Skool log-in needed this time).
+`graphics: the window stayed blank (...) in mode auto - switching to safe` (on a Mac: `- switching to software`),
+`graphics: the member can see the window - ...` (they answered « Je vois Virtuoz »), a `graphics: ... · webgl ...`
+line with `webgl enabled` (3D works) or `webgl disabled_off` (3D can't start), `skool: opened on the remembered pass`
+(no Skool log-in needed this time).
 
 **It shows** when `phase` is `drawn` and, on Windows, `screen` is `drawn` or `skipped` (or `member` is `seen`); on a
 Mac, when `own` is `drawn` and the member confirms. Then go to section 11.
 
-The first time, macOS may ask "Virtuoz would like to access files in your Documents folder": the member clicks
-Allow (that is where their projects live). Any other system question is the member's to answer, never yours.
+The first time, macOS may ask whether Virtuoz may access the files in the Documents folder: the member accepts (OK /
+« Autoriser »), because that is where their projects live. Any other system question is the member's to answer, never
+yours.
 
 ## 8. When the window doesn't show
 
-First: if a question is on screen, the member answers it. The app (a Windows message box "Is the Virtuoz window
-dark or empty?", button "It's dark or empty - fix it") and the launcher (a small window "Is Virtuoz's window dark or
-empty?", button "It's dark: fix it") try the next graphics mode by themselves. Wait a minute and read the status file
-again. A start stuck at `starting` (no new `at` for 45 seconds, or 3 minutes without a window): ask the member to
+First: if a question is on screen, the member answers it. The app (a message box « La fenêtre Virtuoz est-elle noire
+ou vide ? », buttons « C'est noir ou vide — répare », « Je vois Virtuoz », « Me demander plus tard ») and the launcher
+(a small window « La fenêtre de Virtuoz est-elle noire ou vide ? », buttons « Elle est noire : réparer » and « Elle
+s'affiche »; or « La fenêtre de Virtuoz ne s'est pas affichée » with a countdown and « Relancer avec ... ») try the
+next graphics mode by themselves. Wait a minute and read the status file again. A start stuck at `starting` (no new `at` for 45 seconds, or 3 minutes without a window): ask the member to
 close Virtuoz, then start it once more.
 
 Still not showing? In this order, reading the status file after each step:
@@ -378,19 +395,22 @@ Still not showing? In this order, reading the status file after each step:
    replaced, the script says `... is open, so the installer did not ...`). It checks every file of the installed app
    against that version's own list (`resources\files.json`; Mac: `Contents/Resources/files.json`) and installs the same
    version again when one is missing or changed (Windows: the release's Setup, checked against its sha512 before it
-   runs; Mac: copied from the release's .dmg). To repair without updating, as the launcher's **Repair** button does,
-   set `CZ_INSTALL_KEEP=installed` for the run (Windows: `$env:CZ_INSTALL_KEEP = "installed"` in the same command;
-   Mac: `CZ_INSTALL_KEEP=installed CZ_NO_TTY=1 ...`). After **Go back** in the launcher (updates paused) the script keeps
-   the version gone back to by itself. When an antivirus removed Virtuoz's own files (section 9), the member first
+   runs; Mac: copied from the release's .dmg). To repair without updating, as the launcher's « Réparer » (Repair)
+   button does, set `CZ_INSTALL_KEEP=installed` for the run (Windows: `$env:CZ_INSTALL_KEEP = "installed"` in the same
+   command; Mac: `CZ_INSTALL_KEEP=installed CZ_NO_TTY=1 ...`). After « Revenir à une version précédente » (Go back) in
+   the launcher (updates paused) the script keeps the version gone back to by itself. When an antivirus removed Virtuoz's own files (section 9), the member first
    restores them and allows Virtuoz, else they are gone again right after (`... missing again right after`).
 2. **Go back.** Ask the member to open **Virtuoz Launcher** (Windows: Start menu; Mac: Applications), click
-   **Go back to an earlier version** and pick the version before the newest. This helps when the newest version itself
-   is the problem. Projects stay. On Windows, automatic updates then pause until they click **Resume updates** in the
-   launcher.
+   « Revenir à une version précédente » and, next to the version that worked for them, « Revenir ». This helps when the
+   newest version itself is the problem. Projects stay, and that version's own settings and project list come back.
+   It needs an earlier version that this computer has used: while 1.0.0 is the only Virtuoz version, or on a first
+   install, the launcher says « Aucune version précédente à laquelle revenir. »: skip this step. On Windows, automatic
+   updates then pause until they click « Reprendre les mises à jour » (Resume updates) in the launcher.
 3. **Graphics modes.** Close Virtuoz (ask first), then start it in a safer mode. The mode is saved, as if picked in
-   Settings > System > Graphics, and the graphics caches are cleared on the way. Read the status file after each.
-   - Windows: first **Safe display** (3D stays on the graphics card, full speed), then **software graphics** (slower,
-     always shows):
+   « Réglages > Système > Graphismes » (Settings > System > Graphics), and the graphics caches are cleared on the way.
+   Read the status file after each.
+   - Windows: first « Affichage sûr » (Safe display: 3D stays on the graphics card, full speed), then « Logiciel »
+     (software graphics: slower, always shows):
      ```powershell
      Get-Process -Name "Virtuoz" -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$env:LOCALAPPDATA\Programs\virtuoz\Virtuoz.exe" } | Stop-Process -Force
      Start-Process "$env:LOCALAPPDATA\Programs\virtuoz\Virtuoz.exe" -ArgumentList "--safe-graphics"
@@ -401,53 +421,54 @@ Still not showing? In this order, reading the status file after each step:
      osascript -e 'quit app "Virtuoz"'; sleep 5; open -a "/Applications/Virtuoz.app" --args --software-graphics
      ```
    After the next update Virtuoz tries the faster mode again by itself, and the member can switch back in
-   Settings > System > Graphics.
-4. **Fix it with Claude** in the Virtuoz Launcher: the launcher collects the app's diagnostics and runs its own
-   known fixes. Ask the member to open the launcher and click it.
+   « Réglages > Système > Graphismes ».
+4. « Réparer avec Claude » (Fix it with Claude) in the Virtuoz Launcher: the launcher collects the app's diagnostics
+   and runs its own known fixes. Ask the member to open the launcher and click it (it shows only when Claude Code is
+   found on the computer).
 5. Still not showing: write the report (section 11).
 
 ## 9. Known failures and their fixes
 
-All of these happened on members' computers or are handled by the installer for that reason. "You" = what you may do;
+Each of these is a known failure on members' computers, or one the installer handles. "You" = what you may do;
 "member" = what only they can do. The letters point to the commands after the table.
 
 | What you see | What it means | What to do |
 |---|---|---|
-| `winget is missing. It comes with "App Installer" from the Microsoft Store.`, then `Install stopped` | winget isn't registered for this user yet (common on a new PC), or App Installer is missing | You, with the member's yes: command A. Still missing: the member installs or updates **App Installer** in the Store window the script opened. Then run the installer again. |
+| `winget is missing. It comes with "App Installer" from the Microsoft Store.`, then `Install stopped` | winget isn't registered for this user yet (common on a new PC), or App Installer is missing | You, with the member's yes: command A. Still missing: the member installs or updates **App Installer** (« Programme d'installation d'application » on a French Windows) in the Store window the script opened. Then run the installer again. |
 | `winget could not install ffmpeg (code -1978335138: something on this PC checks your internet traffic...)` (also git, Python, Node.js), then `Downloading it directly instead` | An antivirus with HTTPS or web scanning, a VPN or a proxy re-signs web traffic, and winget refuses it. The script falls back to the official downloads | Nothing, when the next line is `[ok]`. If the direct download fails too (`Install stopped: could not install ...`): ask the member to disconnect a VPN for the install, or to add github.com, gyan.dev, nodejs.org and python.org to their antivirus's web-protection exceptions. Never ask them to turn the antivirus off. Then run the installer again. |
-| `Smart App Control is On. It blocks the Python packages...`; later `WinError 4551` or `blocked by application control policy` (Python, transcription) | Windows 11 Smart App Control only lets signed programs run. The Python packages behind Virtuoz's transcription and audio steps are not signed | The member's decision, never yours. Explain before the install: while it is On, transcription and the audio steps don't work. Turning it off: Windows Security > App & browser control > Smart App Control settings > Off. Windows can only turn it back on by resetting or reinstalling Windows; Microsoft Defender keeps protecting the PC either way. If it is already Off and the error stays, an organisation's App Control policy blocks it: they ask whoever manages the PC. |
+| `Smart App Control is On. It blocks the Python packages...`; later `WinError 4551` or `blocked by application control policy` (Python, transcription) | Windows 11 Smart App Control only lets signed programs run. The Python packages behind Virtuoz's transcription and audio steps are not signed | The member's decision, never yours. Explain before the install: while it is On, transcription and the audio steps don't work. Turning it off: Windows Security > App & browser control > Smart App Control settings > Off (on a French Windows: Sécurité Windows > Contrôle des applications et du navigateur > Paramètres du Contrôle intelligent des applications > Désactivé). Windows can only turn it back on by resetting or reinstalling Windows; Microsoft Defender keeps protecting the PC either way. If it is already Off and the error stays, an organisation's App Control policy blocks it: they ask whoever manages the PC. |
 | `WinError 1114` ... `c10.dll` (importing the Python packages, transcription), or `[!] PyTorch (transcription) cannot start: Windows is missing the Microsoft Visual C++ Redistributable` / `Transcription will not work until ...` | PyTorch can't start: the Microsoft Visual C++ Redistributable (x64) is missing, usually because the permission box was declined. The installer asks once more by itself | With the member's yes (Windows asks for admin rights): command B, then run the installer again (it checks that PyTorch starts). |
-| `... is Python 3.13` (3.14, `a conda Python`, `32-bit Python`, `does not run`): `not used (it stays as it is)`, then `Installing Python 3.12 ...` and `Virtuoz is set to use this Python (...)` | PyTorch (transcription) doesn't run on that Python. The installer leaves it alone, installs Python 3.12 next to it and points Virtuoz at it (Settings > System > Tool paths > Python; only that setting changes) | Nothing. If it says `could not set Virtuoz to use ...`: the member pastes the path it shows into Settings > System > Tool paths > Python. |
+| `... is Python 3.13` (3.14, `a conda Python`, `32-bit Python`, `does not run`): `not used (it stays as it is)`, then `Installing Python 3.12 ...` and `Virtuoz is set to use this Python (...)` | PyTorch (transcription) doesn't run on that Python. The installer leaves it alone, installs Python 3.12 next to it and points Virtuoz at it (« Réglages > Système > Chemins des outils », the `python` field; only that setting changes) | Nothing. If it says `could not set Virtuoz to use ...`: the member pastes the path it shows into « Réglages > Système > Chemins des outils », the `python` field. |
 | `Python 3.12 was installed but does not start. Open a new PowerShell window...` | Python's folder is in the PATH, but only new processes see it, or the install was blocked | Run the installer again (each run reads the PATH fresh). Again: restart the computer first. |
 | `[!] pip could not install: ...` (in the list at the end) | A download failed (internet, a proxy, antivirus web scanning), the disk is full, or Smart App Control | Check free space and the connection, fix the cause, run again. The app itself is installed either way. |
 | `[!] Claude Code did not install: claude.ai could not be reached` / `claude.ai sent a web page instead of its installer` | No internet to claude.ai, a filter, or a network that wants a login first (hotel or office Wi-Fi) | The member opens https://claude.ai in their browser (and logs in to the Wi-Fi if it asks), then you run the installer again. Everything else is already installed. |
 | `WARNING: Cache entry deserialization failed` (pip) | A harmless pip warning | Nothing. |
 | `could not reach the Virtuoz releases` / `could not reach GitHub` | No internet, or a firewall, proxy or VPN blocks github.com | Command C. The member allows it or uses another network. |
 | `Virtuoz ... is open, so the installer did not ...` (from the launcher's Repair: `Install stopped: Virtuoz is open, so the launcher could not ...`) | The app was running and something of it had to be replaced | Ask the member to close it (Mac: Cmd+Q), run the installer again. |
-| `N file(s) of Virtuoz X are missing or changed (...): installing X again` | An antivirus took or changed some of its files, or an update stopped half way | Nothing: the same version goes back in. `... missing again right after`: an antivirus removes them as they come; the member allows Virtuoz (below), then run again. |
+| `N file(s) of Virtuoz X are missing or changed (...): installing X again` (Mac: `... are missing or incomplete (...): copying X in again`) | An antivirus took or changed some of its files, or an update stopped half way | Nothing: the same version goes back in. `... missing again right after`: an antivirus removes them as they come; the member allows Virtuoz (below), then run again. |
 | `the download of Virtuoz X was damaged on the way (it did not match the release)` | Something changed the download (an antivirus's web scanning, a proxy, a cut connection). It was not run | Run again. Again: the member allows github.com in the antivirus's web protection or pauses a VPN / proxy for the install. |
-| `Updates are paused (you went back to X in the Virtuoz Launcher)` | The member used Go back: the installer keeps that version | Nothing. Newer versions come back when they press **Resume updates** in the launcher. |
+| `Updates are paused (you went back to ... in the Virtuoz Launcher)` | The member used « Revenir à une version précédente » (Go back): the installer keeps that version | Nothing. Newer versions come back when they press « Reprendre les mises à jour » (Resume updates) in the launcher. |
 | `Virtuoz X is installed (a test version, newer than Y)` | A beta is installed: the installer never replaces it with an older release | Nothing. |
 | `the Virtuoz installer did not finish (code N)` | The setup was blocked, usually by an antivirus, or the app was still running | Check the antivirus's quarantine ("Allowing Virtuoz in an antivirus" below), make sure Virtuoz is closed, run again. |
-| Windows: "Virtuoz cannot be closed. Please close it manually and click Retry", or "Failed to uninstall old application files" | A program Virtuoz started (its Claude, Python or Blender) still holds one of its files | Ask the member to close Virtuoz, wait a minute, run again. Still: restart the computer, then run again. Don't end `claude`, `python` or `blender` processes yourself. |
-| The launcher says "Virtuoz didn't finish updating" (the app's program is missing) | An update stopped half way | Run the installer again (or the member clicks **Finish the update** in the launcher). Projects and settings stay. |
-| "Ransomware", "Threat detected", Virtuoz closes by itself while it works, "engine files are missing" (often one style, like Stick stories), "Virtuoz is missing its own file" | Virtuoz writes many files into Documents while it builds and isn't signed by a big publisher, so some antivirus programs take it for ransomware and quarantine its files | The member restores and allows Virtuoz (below), then the same version is installed again (section 8, step 1). Files gone again: the allow step was not done, show it again. |
-| Norton keeps quarantining the **Virtuoz Launcher** (or the app), with no way to restore it | Norton removed it as an unknown file | The member allows Virtuoz in Norton (below), then you run the installer again: it puts the launcher back. |
-| "Windows protected your PC" (SmartScreen), or a Virtuoz program "is not allowed to run" | The files carry the "downloaded from the internet" mark | With the member's yes, only for Virtuoz's own folders: command D. |
+| Windows: the Virtuoz installer (it is in French) says Virtuoz can't be closed and asks to close it and retry, or that it could not uninstall the old application files ("Virtuoz cannot be closed. Please close it manually and click Retry" / "Failed to uninstall old application files" in English) | A program Virtuoz started (its Claude, Python or Blender) still holds one of its files | Ask the member to close Virtuoz, wait a minute, run again. Still: restart the computer, then run again. Don't end `claude`, `python` or `blender` processes yourself. |
+| The launcher says « La mise à jour de Virtuoz n'est pas terminée » (the app's program is missing) | An update stopped half way | Run the installer again (or the member clicks « Terminer la mise à jour » in the launcher). Projects and settings stay. |
+| "Ransomware", "Threat detected", Virtuoz closes by itself while it works, `Some of the app's files for the <style> style are missing` (often one style, like Stick stories), `... could not run: Virtuoz is missing its own file ...` (in French: « il manque à Virtuoz son propre fichier ») | Virtuoz writes many files into Documents while it builds and isn't signed by a big publisher, so some antivirus programs take it for ransomware and quarantine its files | The member restores and allows Virtuoz (below), then the same version is installed again (section 8, step 1). Files gone again: the allow step was not done, show it again. |
+| Norton quarantines the **Virtuoz Launcher** (or the app), with no way to restore it | Norton removed it as an unknown file | The member allows Virtuoz in Norton (below), then you run the installer again: it puts the launcher back. |
+| « Windows a protégé votre ordinateur » ("Windows protected your PC", SmartScreen), or a Virtuoz program "is not allowed to run" | Virtuoz's installers are not code-signed, and the files carry the "downloaded from the internet" mark | A Setup the member downloaded by hand: they click « Informations complémentaires », then « Exécuter quand même » (their click, never yours). Installed files: with the member's yes, only for Virtuoz's own folders, command D. |
 | `... cannot be loaded because running scripts is disabled on this system` / `... is not digitally signed` | An execution policy set by an organisation (`MachinePolicy` / `UserPolicy`) overrides `-ExecutionPolicy Bypass` | The member's PC (or their IT's) to decide. With their yes: command E, the official one-line command (the same file, without a script file). Without a yes: section 11. |
 | Installed fine, but the member doesn't find Virtuoz in the Start menu, or its settings look different from what you saw | Your shell may run inside an app package's private copy of AppData (seen with an older Claude desktop app on Windows): what it installs there, only you can see | Check with command F. Inside a package: ask the member to open PowerShell themselves and paste the official one-line command (E, the part in quotes), then check again. |
 | `Homebrew is missing, and installing it needs your Mac password once...` | You can't type a password (and shouldn't) | Section 5, Mac step 1: the member runs the one-line command in Terminal. |
 | `Need sudo access on macOS` or "needs to be an Administrator" (Homebrew) | This macOS account is not an administrator | The member logs in with an administrator account, or an administrator installs Homebrew. |
 | A macOS pop-up offers to install the "command line developer tools" | `git` and `python3` in /usr/bin are stubs until Apple's Command Line Tools are there | Don't click it for the member, and don't run `git` or `python3` until Homebrew is installed (Homebrew brings the tools). |
-| "Virtuoz can't be opened", "was blocked", "is damaged", "unidentified developer" (Mac) | The app isn't notarized by Apple (on purpose) and carries the quarantine flag (a copy dragged in from a download, or after an update) | You: command H, then open it again. Or the member: System Settings > Privacy & Security > **Open Anyway** (macOS 12: System Preferences > Security & Privacy > General). Never "Move to Trash". |
+| "Virtuoz can't be opened", "was blocked", "is damaged", "unidentified developer" (Mac; in French « ne peut pas être ouvert », « a été bloqué », « est endommagé », « développeur non identifié ») | The app is only ad-hoc signed, not signed and notarized by Apple, and carries the quarantine flag (a copy dragged in from a download, or after an update) | You: command H, then open it again. Or the member: « Réglages Système > Confidentialité et sécurité » > « Ouvrir quand même » (macOS 12: « Préférences Système > Sécurité et confidentialité », onglet Général). Never « Placer dans la corbeille » (Move to Trash). |
 | `ENOTEMPTY: directory not empty, rmdir '/Applications/Virtuoz.app.new/...'` (Mac, during an update) | A half-finished update left a copy behind | Ask the member to quit Virtuoz and the launcher, then run the installer again (it clears that leftover). Still: command I, then run again. |
-| After an install or update, New project says a style's files are missing ("Stick stories files are missing"), Mac | An earlier copy was incomplete | Run the installer again: it checks the app's files and copies it again. |
+| After an install or update, « Nouveau projet » (New project) says a style's files are missing (`Some of the app's files for the Stick stories style are missing ...`), Mac | An earlier copy was incomplete | Run the installer again: it checks the app's files and copies it again. |
 | `the copy of Virtuoz is incomplete` / `the copied app says version ...` (Mac) | A copy into Applications stopped half way (the old app was kept) | Restart the Mac, run the installer again. |
-| `could not copy the app into Applications`, or "Operation not permitted" on `/Applications` (Mac) | Virtuoz is still open, the disk is full, the account is not an administrator, or a macOS privacy setting stops the app you run in from changing other apps | Check those in that order. A privacy setting (System Settings > Privacy & Security, App Management) is the member's to allow, never yours. |
-| `spawn ENOTDIR`, or "... could not be started: a folder in its path is actually a file" | An entry in the PATH points to a file, not a folder | Command G finds it. Show the member; remove that one entry only with their yes (Mac: its line in `~/.zprofile` or `~/.zshrc`; Windows: Environment Variables). |
+| `could not copy the app into Applications`, or "Operation not permitted" on `/Applications` (Mac) | Virtuoz is still open, the disk is full, the account is not an administrator, or a macOS privacy setting stops the app you run in from changing other apps | Check those in that order. A privacy setting (« Réglages Système > Confidentialité et sécurité », App Management / « Gestion des apps ») is the member's to allow, never yours. |
+| `spawn ENOTDIR`, or `... could not be started: a folder in its path is actually a file`, or `A folder on your computer's PATH is actually a file` | An entry in the PATH points to a file, not a folder | Command G finds it. Show the member; remove that one entry only with their yes (Mac: its line in `~/.zprofile` or `~/.zshrc`; Windows: Environment Variables). |
 | `ANTHROPIC_API_KEY` is set | Claude Code may bill that API key instead of the member's Claude plan, and a key without credit stops every edit | Tell the member; never print it. They decide whether to remove it. Windows: "Edit the system environment variables" > Environment Variables, delete it under User variables (and System variables), restart the PC. Mac: delete the line that sets it in `~/.zshrc` or `~/.zprofile`, then log out and in. |
-| Documents is inside OneDrive (or iCloud Drive) | The projects would sit where the cloud keeps files "online-only" or locks them while syncing (`EPERM`, `EBUSY`, "project folder is missing") | Tell the member. Easiest: right-click `Documents\Virtuoz` > OneDrive > "Always keep on this device". Or pick a folder outside the cloud later, in Virtuoz Settings > General > Workspace folder. |
-| The Skool log-in says it can't reach Skool | An antivirus (Bitdefender, Norton, Avast), a firewall or a VPN blocks skool.com for Virtuoz | The member allows Virtuoz in it or turns the VPN off, then clicks **Try again**. |
+| Documents is inside OneDrive (or iCloud Drive) | The projects would sit where the cloud keeps files "online-only" or locks them while syncing (`EPERM`, `EBUSY`, "project folder is missing") | Tell the member. Easiest: right-click `Documents\Virtuoz` > OneDrive > « Toujours conserver sur cet appareil » (Always keep on this device). Or move the projects outside the cloud later, in Virtuoz: « Réglages > Système > Espace de travail » > « Déplacer… ». |
+| The Skool check window says « Impossible de joindre Skool » (Can't reach Skool) | An antivirus (Bitdefender, Norton, Avast), a firewall or a VPN blocks skool.com for Virtuoz | The member allows Virtuoz in it or turns the VPN off, then clicks « Réessayer » (Try again). |
 | A black, dark or empty Virtuoz window | On some graphics cards the window doesn't show although the app runs | Section 8. |
 | A stuck screen after Virtuoz was opened twice | Two starts at once | Ask the member to close every Virtuoz window, start it once, and wait. |
 | `Virtuoz needs Windows 10 (version 1809) or newer`, `needs 64-bit Windows 10 or 11`, `needs macOS 12 (Monterey) or newer` | This computer can't run Virtuoz | Tell the member; nothing to fix. |
@@ -492,6 +513,10 @@ The folders to allow. Windows: `%LOCALAPPDATA%\Programs\virtuoz`, `%LOCALAPPDATA
   Add an exclusion > Folder: add each folder above. If Controlled folder access is on (section 3 shows `1`):
   Virus & threat protection > **Ransomware protection** > Allow an app through Controlled folder access > Add an
   allowed app: `Virtuoz.exe` from `%LOCALAPPDATA%\Programs\virtuoz`.
+  On a French Windows (as the Virtuoz Launcher words it): « Sécurité Windows > Protection contre les virus et menaces >
+  Historique de protection » (restore), then « Protection contre les virus et menaces > Gérer les paramètres >
+  Exclusions > Ajouter une exclusion > Dossier », and « Protection contre les ransomware > Autoriser une application via
+  l'accès contrôlé aux dossiers ».
 - **Norton** (names vary by version and language): Security > **History**, show **Quarantine**, select the Virtuoz
   item > **Restore & exclude this file**. Then Settings > Antivirus > **Scans and Risks**: add the folders above under
   "Items to Exclude from Scans" and "Items to Exclude from Auto-Protect...".
@@ -514,7 +539,7 @@ The folders to allow. Windows: `%LOCALAPPDATA%\Programs\virtuoz`, `%LOCALAPPDATA
 | The app's own Python environment | (none: the installed Python) | `~/Library/Application Support/Virtuoz/python` |
 | Releases | https://github.com/mario-melek/virtuoz-releases | https://github.com/mario-melek/virtuoz-mac-releases |
 | The app's own ffmpeg + Python 3.12 (the app downloads and checks them itself the first time it runs) | the `runtime` folder in the app's data folder (above) | the `runtime` folder in the app's data folder (above) |
-| The project list (database; never edit it by hand) | `database\suite.db` in the app's data folder (older versions: in the projects folder) | `database/suite.db` in the app's data folder (older versions: in the projects folder) |
+| The project list (database; never edit it by hand) | `database\suite.db` in the app's data folder | `database/suite.db` in the app's data folder |
 
 The rescue commands (the member can paste them when the window stays dark; they close Virtuoz, update it and start
 it in a safer graphics mode):
@@ -528,14 +553,16 @@ Delete your download folder (`%TEMP%\virtuoz-setup` or `~/.virtuoz-setup`).
 **When the window shows**, tell the member, in your own short words:
 - Virtuoz is installed, with the Virtuoz Launcher next to it.
 - Virtuoz is open now (later: Start menu or desktop > Virtuoz; on a Mac, Applications > Virtuoz).
-  **Log in with Skool** in its window.
-- Then, if Home shows **Connect Claude**, click **Sign in** and use the same Claude account.
+  In its window, « Se connecter avec Skool » (Log in with Skool) with their Skool account.
+- Then, if « Accueil » (Home) shows « Connecter Claude » (Connect Claude), click « Se connecter » (Sign in) and use the
+  same Claude account.
 - Their projects will be in `Documents/Virtuoz`. To update or repair later: run the same setup again, or open
   Virtuoz Launcher.
 - Anything you found that they should know (Smart App Control, OneDrive, an API key, an antivirus they allowed).
 
-**When something failed** and you couldn't fix it, write this report for the member to paste into **Bugs & Support**
-in the community (https://www.skool.com/virtuoz-academie-6395). Don't post it yourself.
+**When something failed** and you couldn't fix it, write this report for the member to post in the Virtuoz community
+on Skool (https://www.skool.com/virtuoz-academie-6395). Don't post it yourself. (The launcher's « Copier le
+diagnostic » and « Signaler un problème » buttons help them add the app's own diagnostics.)
 
 ```
 Virtuoz setup report
@@ -559,7 +586,7 @@ The rules of section 1 hold here too. Never touch the member's projects. Work th
 soon as Virtuoz works again.
 
 1. **Ask what's wrong** in one question, if they didn't say: won't open / stays dark, an update that fails, or a step
-   (export, voiceover, Clean and time, a build) that keeps failing. Ask for the exact message they see.
+   (export, « Voix off » (voiceover), « Nettoyer et caler » (Clean and time), a build) that keeps failing. Ask for the exact message they see.
 2. **Look before you change anything** (section 10 has the paths for both systems):
    - which computer this is (section 3), and whether the app and the launcher are installed, with their versions;
    - the last start in `launch-status.json` (section 7);
@@ -574,13 +601,14 @@ soon as Virtuoz works again.
    - A tool missing or broken, files an antivirus removed, an update that stopped half way: **Repair** = run the
      installer again (sections 4 and 5; Virtuoz closed first, after the member said yes). It puts back what is
      missing and leaves projects, settings and sign-ins as they are.
-   - The newest version itself fails (it worked before the update): the launcher's **Go back to an earlier version**
-     (section 8 step 2).
-   - An export or a pipeline step (voiceover, Clean and time, sound) that fails with an error the app shows: in
-     Virtuoz, the error toast has **Fix with launcher**; or the launcher's **Fix it with Claude**: it reads that
-     step's own diagnostics and can patch the app's scripts for this version safely. Ask the member to click it.
-   - Claude shows as not connected in Virtuoz: `claude --version` must work in a new terminal; then **Sign in** on
-     Home in Virtuoz. Never ask for or read a key.
+   - The newest version itself fails (it worked before the update): the launcher's « Revenir à une version
+     précédente » (section 8 step 2; only when an earlier version exists).
+   - An export or a pipeline step (« Voix off », « Nettoyer et caler », sound) that fails with an error the app shows:
+     in Virtuoz, the error message may have a « Réparer avec le lanceur » (Fix with launcher) button; or the launcher's
+     « Réparer avec Claude » (Fix it with Claude): it reads that step's own diagnostics and can patch the app's scripts
+     for this version safely. Ask the member to click it.
+   - Claude shows as not connected in Virtuoz: `claude --version` must work in a new terminal; then « Se connecter »
+     (Sign in) on the « Connecter Claude » card of « Accueil » (Home) in Virtuoz. Never ask for or read a key.
 4. **Check it works:** start Virtuoz and read the status file (section 7), or ask the member to run the step that
    failed once more. Say plainly what you changed.
 5. **Not fixed:** write the report of section 11 with "Fix" in place of "setup" and every step you tried.
@@ -602,7 +630,7 @@ The rules of section 1 hold here too. Projects, settings and sign-ins stay as th
    it, leave `CZ_INSTALL_VERSION` out below: the installer then takes the newest public version. Say so to the member.
 2. **Look at the computer** (section 3). Tell the member in one or two plain sentences: which version they have, which
    one they get. Windows build too old or macOS too old: stop and tell them (section 3).
-3. **Close Virtuoz, with their yes.** Ask first whether a build, an export or a Routine is running: if so, they wait
+3. **Close Virtuoz, with their yes.** Ask first whether a build, an export or a routine (« Routines ») is running: if so, they wait
    for it or stop it themselves. Then:
    - Windows:
      ```powershell
@@ -633,6 +661,8 @@ The rules of section 1 hold here too. Projects, settings and sign-ins stay as th
    Then start Virtuoz and check that its window really shows: section 7, with `version` in `launch-status.json` equal
    to `<new>` and a `pid` that is running. The window doesn't show: section 8, in its order. Skip its **Go back** step
    unless the member agrees to stay on the older version for now, and say that this leaves them without the update.
+   If `update.json` names the version that is already installed (`... is installed and complete ...` or `... is up to
+   date`), there is nothing newer: say so, and only check that it starts and shows.
 7. **Still not installed or still not starting after two runs: a fresh install of the program.** This replaces only the
    program files. Never delete the data folder or the projects (section 10). Get the member's yes, say that their
    projects, settings and log-ins stay, make sure Virtuoz is closed (step 3), then:
@@ -647,17 +677,19 @@ The rules of section 1 hold here too. Projects, settings and sign-ins stay as th
 
    These often need the member's click, so ask for it, and don't work around them:
    - an antivirus removing or blocking files: "Allowing Virtuoz in an antivirus" in section 9. Never turn it off.
-   - the app crashing before any window, in every graphics mode (Windows exit code `0x80000003` / `-2147483645`, or a
-     crash in the graphics process): section 8 step 3 first. Still crashing: start it once by hand with
-     `& "$env:LOCALAPPDATA\Programs\virtuoz\Virtuoz.exe" --disable-gpu-sandbox`, with their yes. If that
+   - the app crashing before any window, in every graphics mode (for example a Windows exit code such as `0x80000003` /
+     `-2147483645`, or `graphics: the graphics process ended (...)` lines in the log): section 8 step 3 first. Still
+     crashing, on Windows: start it once by hand with
+     `& "$env:LOCALAPPDATA\Programs\virtuoz\Virtuoz.exe" --disable-gpu-sandbox`, with their yes (a Chromium switch,
+     not a Virtuoz one). If that
      opens it, tell them, put it in the report (step 8), and let them decide whether to keep using it that way for now.
      Never use `--no-sandbox` as a lasting setting, and never change a shortcut or a setting for this yourself.
    - a dark window: section 8.
 8. **Finish.** Delete your download folder (section 11). When Virtuoz is running on `<new>`, say in a few short words:
    it's updated, it's open, which version it is now, and that their projects are all there. If its window asks for the
    Skool log-in, they log in now (`phase: gate` in section 7). If it says updates were paused (they used Go back once),
-   tell them to press **Resume updates** in the Virtuoz Launcher. Don't close Virtuoz again.
+   tell them to press « Reprendre les mises à jour » in the Virtuoz Launcher. Don't close Virtuoz again.
 
    Couldn't get there: write the report of section 11 with "Update" in place of "setup", the version you tried and every
-   step you tried. The member posts it in **Bugs & Support**. Say plainly that Virtuoz isn't updated yet, and which
+   step you tried. The member posts it in the Virtuoz community on Skool. Say plainly that Virtuoz isn't updated yet, and which
    version they can still use.

@@ -35,13 +35,13 @@ if (-not (Test-Path $AppExe) -and -not $DryRun) {
 }
 
 Step 'Closing Virtuoz'
-$procs = @(Get-Process -Name 'Virtuoz' -ErrorAction SilentlyContinue)
+$procs = @(Get-Process -Name 'Virtuoz' -ErrorAction SilentlyContinue | Where-Object { -not $_.Path -or $_.Path -like "$AppDir\*" })   # only the installed Virtuoz
 if (-not $procs.Count) { Ok 'it was not running' }
 elseif ($DryRun) { Note "(test mode) would close $($procs.Count) Virtuoz process(es)" }
 else {
   $procs | Stop-Process -Force -ErrorAction SilentlyContinue
-  for ($i = 0; $i -lt 20 -and (Get-Process -Name 'Virtuoz' -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 500 }
-  if (Get-Process -Name 'Virtuoz' -ErrorAction SilentlyContinue) { Warn 'it is still closing; restart the computer if the next steps fail' } else { Ok 'closed' }
+  for ($i = 0; $i -lt 20 -and ($procs | Where-Object { -not $_.HasExited }); $i++) { Start-Sleep -Milliseconds 500 }
+  if ($procs | Where-Object { -not $_.HasExited }) { Warn 'it is still closing; restart the computer if the next steps fail' } else { Ok 'closed' }
 }
 
 Step 'Updating Virtuoz'
@@ -52,6 +52,7 @@ try {
   if ($yml -is [byte[]]) { $yml = [Text.Encoding]::UTF8.GetString($yml) }
   $latest = [regex]::Match($yml, '(?m)^version:\s*(\S+)').Groups[1].Value
   $file = [regex]::Match($yml, '(?m)^path:\s*(\S+)').Groups[1].Value
+  $sha = [regex]::Match($yml, '(?m)^sha512:\s*(\S+)').Groups[1].Value
 } catch { $latest = $null; Warn 'could not reach the Virtuoz releases, so it was not updated (it is started anyway)' }
 if ($latest -and $file) {
   if ($current -and (Ver $current) -ge (Ver $latest)) { Ok "Virtuoz $current is up to date" }
@@ -62,6 +63,10 @@ if ($latest -and $file) {
     $setup = Join-Path $dl $file
     Note "Downloading Virtuoz $latest ..."
     Invoke-WebRequest "https://github.com/$Owner/$Repo/releases/download/v$latest/$file" -OutFile $setup -UseBasicParsing
+    # the release's own sha512 (latest.yml): a download damaged on the way is never run
+    $sm = [Security.Cryptography.SHA512]::Create(); $fs = [IO.File]::OpenRead($setup)
+    try { $got = [Convert]::ToBase64String($sm.ComputeHash($fs)) } finally { $fs.Dispose(); $sm.Dispose() }
+    if ($sha -and $got -ne $sha) { Remove-Item $dl -Recurse -Force -ErrorAction SilentlyContinue; throw 'the download of the update was damaged on the way (its checksum does not match). Run this again.' }
     Note 'Installing ...'
     $p = Start-Process $setup -ArgumentList '/S' -Wait -PassThru
     Remove-Item $dl -Recurse -Force -ErrorAction SilentlyContinue

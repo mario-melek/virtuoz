@@ -57,8 +57,10 @@ if [ -n "$LATEST" ]; then
     note "Downloading Virtuoz $LATEST ..."
     TMP=$(mktemp -d); trap 'hdiutil detach -quiet "$TMP/mnt" >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
     if curl -fL --progress-bar -o "$TMP/suite.dmg" "$URL" && hdiutil attach -quiet -nobrowse -readonly -mountpoint "$TMP/mnt" "$TMP/suite.dmg" && [ -d "$TMP/mnt/Virtuoz.app" ]; then
-      rm -rf "$APP"
-      ditto "$TMP/mnt/Virtuoz.app" "$APP" || die "could not copy the app into Applications."
+      # copied next to the app first, then swapped: a copy that fails leaves the installed Virtuoz as it was
+      NEW="$APP.new"; rm -rf "$NEW"
+      if ditto "$TMP/mnt/Virtuoz.app" "$NEW"; then rm -rf "$APP" && mv "$NEW" "$APP" || die "could not put the new app into Applications."
+      else rm -rf "$NEW"; die "could not copy the app into Applications (the installed Virtuoz is untouched)."; fi
       hdiutil detach -quiet "$TMP/mnt" || true
       xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
       CURRENT="$LATEST"; ok "Virtuoz $LATEST installed"
