@@ -117,6 +117,9 @@ grep -qsF "$LINE" "$PROFILE" || { printf '\n%s\n' "$LINE" >> "$PROFILE"; note "A
 step "git, ffmpeg, Python and Node.js"
 for f in git ffmpeg python@3.12 node; do
   if "$BREW" list --versions "$f" >/dev/null 2>&1; then ok "$f already installed"
+  # any Node.js already there (node@22 from Homebrew, nvm, the nodejs.org installer) is kept: installing Homebrew's
+  # newest "node" would unlink a node@NN the member uses (2026-11-07, a test Mac with node@22)
+  elif [ "$f" = node ] && command -v node >/dev/null 2>&1; then ok "Node.js already installed ($(node --version 2>/dev/null))"
   else
     note "Installing $f ..."
     if "$BREW" install --quiet "$f"; then ok "$f installed"
