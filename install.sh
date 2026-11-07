@@ -117,7 +117,14 @@ grep -qsF "$LINE" "$PROFILE" || { printf '\n%s\n' "$LINE" >> "$PROFILE"; note "A
 step "git, ffmpeg, Python and Node.js"
 for f in git ffmpeg python@3.12 node; do
   if "$BREW" list --versions "$f" >/dev/null 2>&1; then ok "$f already installed"
-  else note "Installing $f ..."; "$BREW" install --quiet "$f" || die "brew could not install $f."; ok "$f installed"; fi
+  else
+    note "Installing $f ..."
+    if "$BREW" install --quiet "$f"; then ok "$f installed"
+    # installed, but not linked: another copy owns the same names (python.org's Python 3.12 in /usr/local/bin, 2026-11-07).
+    # Virtuoz uses Homebrew's own path for it (brew --prefix), so it is enough.
+    elif "$BREW" list --versions "$f" >/dev/null 2>&1; then warn "$f is installed, but Homebrew could not link it (another copy uses the same names): Virtuoz uses Homebrew's copy directly"
+    else die "brew could not install $f."; fi
+  fi
 done
 BREW_PY="$("$BREW" --prefix python@3.12)/bin/python3.12"
 [ -x "$BREW_PY" ] || die "Python 3.12 is missing after installing it ($BREW_PY)."
