@@ -155,7 +155,15 @@ MISSING=$(pkgs_missing) || die "the check of the Python packages could not run (
 if [ -n "$MISSING" ]; then
   note "Installing $MISSING (stable-ts brings PyTorch, a few hundred MB) ..."
   "$VENV/bin/python3" -m pip install --quiet --upgrade pip >/dev/null || true
-  "$VENV/bin/python3" -m pip install --quiet --no-cache-dir --upgrade $MISSING || true
+  # Intel Macs: the newest llvmlite / numba (stable-ts > whisper) and PyTorch have no ready-made build for them any more,
+  # and pip's own build of llvmlite fails (2026-11-07): take the newest versions that do have one. Their last PyTorch
+  # (2.2) was built against NumPy 1, so NumPy stays below 2 there.
+  PIPX=""; PIN=""
+  if [ "$(uname -m)" = x86_64 ]; then PIPX="--only-binary=llvmlite,numba,torch,numpy,scipy,pillow"; PIN="numpy<2"; fi
+  # the light packages first, so the app's sound steps work even if the transcription (stable-ts, PyTorch) does not
+  BASE=$(printf '%s\n' $MISSING | grep -v '^stable-ts$' | tr '\n' ' ' || true)
+  [ -n "$BASE$PIN" ] && { "$VENV/bin/python3" -m pip install --quiet --no-cache-dir --upgrade $PIPX $BASE $PIN || true; }
+  case " $MISSING " in *" stable-ts "*) "$VENV/bin/python3" -m pip install --quiet --no-cache-dir --upgrade $PIPX stable-ts $PIN || true ;; esac
   AFTER=$(pkgs_missing || echo "$MISSING")
   if [ -n "$AFTER" ]; then todo "pip could not install: $AFTER (internet connection, a proxy or the disk full?). Transcription and the audio steps need them: run the installer again, or Repair in the Virtuoz Launcher."
   else ok "Python packages installed"; fi
