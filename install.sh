@@ -46,9 +46,42 @@ is_held() { local v; v=$(printf '%s' "$1" | sed 's/\./\\./g'); [ -f "$SUPPORT/up
 
 # versions: prints 1 when $1 is newer, -1 when $2 is, 0 when the same. x.y.z, then a test build (0.24.0-beta.1) is
 # older than 0.24.0 and newer than 0.23.x
+# github.com's release links can answer 504 while the API answers (2026-11-08: every github.com page of this account,
+# and Norton's HTTPS scanning): the API's link to the same release file. Same as install.ps1 (Alt-Url).
+gh_alt() {
+  local rest="${1#https://github.com/}" repo tag name
+  [ "$rest" != "$1" ] || return 1
+  repo="${rest%%/releases/*}"; rest="${rest#*/releases/}"
+  case "$rest" in
+    latest/download/*) tag=latest; name="${rest#latest/download/}" ;;
+    download/*/*) rest="${rest#download/}"; tag="tags/${rest%%/*}"; name="${rest#*/}" ;;
+    *) return 1 ;;
+  esac
+  curl -fsSL -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$repo/releases/$tag" 2>/dev/null |
+    awk -v n="$name" -F'"' '$2=="url" && $4 ~ /\/releases\/assets\// {u=$4} $2=="name" && $4==n && u {print u; f=1; exit} END {exit !f}'
+}
+gh_get() {
+  local a
+  curl -fsSL "$1" 2>/dev/null && return 0
+  a=$(gh_alt "$1") && curl -fsSL -H "Accept: application/octet-stream" "$a"
+}
+# the newest release's page (…/releases/tag/vX), from github.com's redirect or else the API
+latest_url() {
+  local u t
+  u=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "$RELEASES/latest" 2>/dev/null || true)
+  case "$u" in */releases/tag/v*) printf '%s' "$u"; return 0 ;; esac
+  t=$(curl -fsSL "https://api.github.com/repos/$OWNER/$MAC_REPO/releases/latest" 2>/dev/null | awk -F'"' '$2=="tag_name" {print $4; exit}')
+  [ -n "$t" ] && printf '%s' "$RELEASES/tag/$t"
+  return 0
+}
 big_dl() {
   # a big download (member 2026-11-06: HTTP/2 error at 89 %, install over): retries go on from where it stopped, then once more over HTTP/1.1
+  local a
   curl -fL --progress-bar --retry 4 --retry-delay 3 --retry-all-errors -C - -o "$1" "$2" && return 0
+  if a=$(gh_alt "$2"); then
+    rm -f "$1"
+    curl -fL --progress-bar --retry 4 --retry-delay 3 --retry-all-errors -H "Accept: application/octet-stream" -o "$1" "$a" && return 0
+  fi
   note "The download stopped half way. Trying again ..."
   rm -f "$1"
   curl -fL --progress-bar --http1.1 --retry 4 --retry-delay 3 -o "$1" "$2"
@@ -234,8 +267,8 @@ if [ -n "$WANT" ]; then
 elif [ -n "$CURRENT" ] && { [ -n "$KEEP" ] || [ -n "$PAUSED" ]; }; then TARGET="$CURRENT"
 elif [ -z "$CURRENT" ] && [ -n "$PAUSED" ] && [ "$PAUSED" != "?" ]; then TARGET="$PAUSED"
 else
-  # github.com's own "latest release" redirect, not the API (which allows 60 requests an hour per network)
-  LATEST_URL=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "$RELEASES/latest" 2>/dev/null || true)
+  # github.com's own "latest release" redirect first (the API allows 60 requests an hour per network), then the API
+  LATEST_URL=$(latest_url)
   case "$LATEST_URL" in
     */releases/tag/v*) LATEST="${LATEST_URL##*/tag/v}" ;;
     *) if curl -fsSI -o /dev/null https://github.com 2>/dev/null; then
@@ -269,9 +302,9 @@ else
     todo "Virtuoz $CURRENT is open, so the installer did not $WHAT. Quit it (Cmd+Q) and run the installer again."
   else
   URL="$RELEASES/download/v$TARGET/Virtuoz-$TARGET-Mac-$CHIP.dmg"   # name set in .github/workflows/mac-build.yml
-  if [ -n "$KEEP" ] && [ -z "$PAUSED" ] && ! curl -fsSLI -o /dev/null "$URL" 2>/dev/null; then
+  if [ -n "$KEEP" ] && [ -z "$PAUSED" ] && ! curl -fsSLI -o /dev/null "$URL" 2>/dev/null && ! gh_alt "$URL" >/dev/null; then
     # the launcher's Repair, and this version is no longer published (pulled): the newest one instead
-    LATEST_URL=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "$RELEASES/latest" 2>/dev/null || true)
+    LATEST_URL=$(latest_url)
     case "$LATEST_URL" in */releases/tag/v*) warn "Virtuoz $TARGET is not published any more: installing the newest version instead"; TARGET="${LATEST_URL##*/tag/v}"; URL="$RELEASES/download/v$TARGET/Virtuoz-$TARGET-Mac-$CHIP.dmg" ;; esac
     # (never a version the update gate held on this Mac, here either: Fable review 2, pass 3, P3-2)
     if is_held "$TARGET"; then todo "the newest version, $TARGET, didn't pass its test on this Mac, so it wasn't installed; Virtuoz $CURRENT stays as it is. A newer version is tested again by itself."; printf '\n%s' "$LEFT"; [ -n "$OLD_LAUNCHER" ] || exit 3; exit 0; fi
@@ -313,7 +346,7 @@ LAPP="/Applications/Virtuoz Launcher.app"
 if [ -n "${CZ_FROM_LAUNCHER:-}" ]; then ok "the launcher is running this repair, so it stays as it is"
 elif [ -n "${CZ_SKIP_APP:-}" ]; then note "(test: CZ_SKIP_APP set, launcher step skipped)"
 else
-  LJ=$(curl -fsSL "https://github.com/$OWNER/virtuoz/releases/latest/download/launcher.json" 2>/dev/null || true)
+  LJ=$(gh_get "https://github.com/$OWNER/virtuoz/releases/latest/download/launcher.json" || true)
   LVER=$(printf '%s\n' "$LJ" | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' | head -1)
   if [ "$CHIP" = "arm64" ]; then LKEY="macArm64"; else LKEY="macX64"; fi
   LZIP=$(printf '%s\n' "$LJ" | sed -n "s/.*\"$LKEY\": *\"\\([^\"]*\\)\".*/\\1/p" | head -1)
