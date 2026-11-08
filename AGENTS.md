@@ -561,7 +561,7 @@ Delete your download folder (`%TEMP%\virtuoz-setup` or `~/.virtuoz-setup`).
 - Anything you found that they should know (Smart App Control, OneDrive, an API key, an antivirus they allowed).
 
 **When something failed** and you couldn't fix it, write this report for the member to post in the Virtuoz community
-on Skool (https://www.skool.com/virtuoz-academie-6395). Don't post it yourself. (The launcher's « Copier le
+on Skool (https://www.skool.com/virtuoz-academie). Don't post it yourself. (The launcher's « Copier le
 diagnostic » and « Signaler un problème » buttons help them add the app's own diagnostics.)
 
 ```
