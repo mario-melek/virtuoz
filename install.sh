@@ -46,7 +46,7 @@ is_held() { local v; v=$(printf '%s' "$1" | sed 's/\./\\./g'); [ -f "$SUPPORT/up
 
 # versions: prints 1 when $1 is newer, -1 when $2 is, 0 when the same. x.y.z, then a test build (0.24.0-beta.1) is
 # older than 0.24.0 and newer than 0.23.x
-# github.com's release links can answer 504 while the API answers (2026-11-08: every github.com page of this account,
+# github.com's release links can answer 504 while the API answers (2026-11-08: a github.com outage, release pages too,
 # and Norton's HTTPS scanning): the API's link to the same release file. Same as install.ps1 (Alt-Url).
 gh_alt() {
   local rest="${1#https://github.com/}" repo tag name
