@@ -103,17 +103,31 @@ function Use-Proxy {
   }
   [Net.WebRequest]::DefaultWebProxy = $wp   # (also for Claude Code's own installer, which downloads by itself)
 }
+# Behind an antivirus's HTTPS scanning (Norton's Web Shield, seen 2026-11-08) a github.com/.../releases/download link
+# answers 504 every time, while the API's link to the same file downloads fine. So a GitHub release file that fails
+# is fetched again through the API (one API request: 60 an hour per network, only used when the first way failed).
+function Gh-Asset($url) {
+  if ($url -notmatch '^https://github\.com/([^/]+)/([^/]+)/releases/(?:latest/download|download/([^/]+))/([^/?#]+)$') { return $null }
+  $o = $Matches[1]; $r = $Matches[2]; $tag = $Matches[3]; $name = [Uri]::UnescapeDataString($Matches[4])
+  $rel = (Invoke-WebRequest -Uri (Net-Url "https://api.github.com/repos/$o/$r/releases/$(if ($tag) { "tags/$tag" } else { 'latest' })") -UseBasicParsing @PX).Content | ConvertFrom-Json
+  return ($rel.assets | Where-Object { $_.name -eq $name } | Select-Object -First 1).url
+}
+function Alt-Url($url) { try { return Gh-Asset $url } catch { return $null } }
+$OctetStream = @{ Accept = 'application/octet-stream' }
 function Web-Get($url) {
-  $c = (Invoke-WebRequest -Uri (Net-Url $url) -UseBasicParsing @PX).Content
+  try { $c = (Invoke-WebRequest -Uri (Net-Url $url) -UseBasicParsing @PX).Content }
+  catch { $alt = Alt-Url $url; if (-not $alt) { throw }; $c = (Invoke-WebRequest -Uri (Net-Url $alt) -Headers $OctetStream -UseBasicParsing @PX).Content }
   if ($c -is [byte[]]) { $c = [Text.Encoding]::UTF8.GetString($c) }
   return [string]$c
 }
 function Web-File($url, $out) {
   # a network hiccup half way doesn't end the install: three tries
+  $hdr = @{}
   for ($i = 1; ; $i++) {
-    try { Invoke-WebRequest -Uri (Net-Url $url) -OutFile $out -UseBasicParsing @PX; return }
+    try { Invoke-WebRequest -Uri (Net-Url $url) -OutFile $out -Headers $hdr -UseBasicParsing @PX; return }
     catch {
       $code = 0; try { $code = [int]$_.Exception.Response.StatusCode } catch { }
+      if (-not $hdr.Count) { $alt = Alt-Url $url; if ($alt) { Note 'GitHub did not answer the usual way (often an antivirus scanning web traffic). Trying through its API ...'; $url = $alt; $hdr = $OctetStream; $i = 0; continue } }
       if ($i -ge 3 -or $code -eq 404) { throw }
       Note 'The download stopped half way. Trying again ...'
       if (-not $env:CZ_INSTALL_MIRROR) { Start-Sleep -Seconds 3 }
