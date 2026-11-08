@@ -127,7 +127,7 @@ function Web-File($url, $out) {
     try { Invoke-WebRequest -Uri (Net-Url $url) -OutFile $out -Headers $hdr -UseBasicParsing @PX; return }
     catch {
       $code = 0; try { $code = [int]$_.Exception.Response.StatusCode } catch { }
-      if (-not $hdr.Count) { $alt = Alt-Url $url; if ($alt) { Note 'GitHub did not answer the usual way (often an antivirus scanning web traffic). Trying through its API ...'; $url = $alt; $hdr = $OctetStream; $i = 0; continue } }
+      if (-not $hdr.Count) { $alt = Alt-Url $url; if ($alt) { $url = $alt; $hdr = $OctetStream; $i = 0; continue } }
       if ($i -ge 3 -or $code -eq 404) { throw }
       Note 'The download stopped half way. Trying again ...'
       if (-not $env:CZ_INSTALL_MIRROR) { Start-Sleep -Seconds 3 }
